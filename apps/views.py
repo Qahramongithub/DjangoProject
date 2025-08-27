@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 from .models import Hikvision
 
 logger = logging.getLogger(__name__)
-TOKEN = "7638710878:AAHTqEvF1gvSqtnBNlfARxvF4-hQLj0uNtI"
+TOKEN = ""
 bot = telebot.TeleBot(TOKEN)
 
 
