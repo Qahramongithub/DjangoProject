@@ -55,8 +55,7 @@ class HikEventView(APIView):
         full_name = access_event.get("name", "Unknown")
         attendance_status = access_event.get("attendanceStatus", "UNKNOWN")
         time = event_data.get("dateTime", "")
-
-        # Xabar tayyorlash
+        image = event_data.get("image", "")
         txt = (
             f"🏢 Kompaniya: {company.name}\n"
             f"🔑 Qurilma: {device_id}\n"
@@ -66,7 +65,7 @@ class HikEventView(APIView):
         )
 
         try:
-            bot.send_message(company.telegram_id, txt)
+            bot.send_photo(int(company.telegram_id), image,txt)
         except Exception as e:
             logger.error(f"Telegramga yuborishda xato: {e}")
             return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
