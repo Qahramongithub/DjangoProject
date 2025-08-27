@@ -1,6 +1,7 @@
 # views.py
 import json
 import logging
+import datetime
 
 import telebot
 from rest_framework import status
@@ -54,19 +55,13 @@ class HikEventView(APIView):
         access_event = event_data.get("AccessControllerEvent", {})
         full_name = access_event.get("name", "Unknown")
         attendance_status = access_event.get("attendanceStatus", "UNKNOWN")
-        time = event_data.get("dateTime", "")
-        image = event_data.get("image", "")
-        print(image)
+        date_time = event_data.get("dateTime", "")
+        date = datetime.datetime.strptime(date_time, "%Y-%m-%d")
+        time = datetime.datetime.strptime(date_time, "%H:%M:%S")
+        # image = event_data.get("image", "")
+        # print(image)
         if full_name:
             if attendance_status == "checkOut":
-                txt = (
-                    f"🏢 Kompaniya: {company.name}\n"
-                    f"🔑 Qurilma: {device_id}\n"
-                    f"👤 Xodim: {full_name}\n"
-                    f"📌 Status: KIRISH\n"
-                    f"📅 Sana: {time}\n"
-                )
-            else:
                 txt = (
                     f"🏢 Kompaniya: {company.name}\n"
                     f"🔑 Qurilma: {device_id}\n"
@@ -74,9 +69,17 @@ class HikEventView(APIView):
                     f"📌 Status: CHIQISH\n"
                     f"📅 Sana: {time}\n"
                 )
+            else:
+                txt = (
+                    f"🏢 Kompaniya: {company.name}\n"
+                    f"🔑 Qurilma: {device_id}\n"
+                    f"👤 Xodim: {full_name}\n"
+                    f"📌 Status: KIRISH\n"
+                    f"📅 Sana: {time}\n"
+                )
 
             try:
-                bot.send_photo(int(company.telegram_id), image, txt)
+                bot.send_photo(int(company.telegram_id), txt)
             except Exception as e:
                 logger.error(f"Telegramga yuborishda xato: {e}")
                 return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
