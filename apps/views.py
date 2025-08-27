@@ -56,18 +56,29 @@ class HikEventView(APIView):
         attendance_status = access_event.get("attendanceStatus", "UNKNOWN")
         time = event_data.get("dateTime", "")
         image = event_data.get("image", "")
-        txt = (
-            f"🏢 Kompaniya: {company.name}\n"
-            f"🔑 Qurilma: {device_id}\n"
-            f"👤 Xodim: {full_name}\n"
-            f"📌 Status: {attendance_status}\n"
-            f"📅 Sana: {time}\n"
-        )
+        print(image)
+        if full_name:
+            if attendance_status == "checkOut":
+                txt = (
+                    f"🏢 Kompaniya: {company.name}\n"
+                    f"🔑 Qurilma: {device_id}\n"
+                    f"👤 Xodim: {full_name}\n"
+                    f"📌 Status: KIRISH\n"
+                    f"📅 Sana: {time}\n"
+                )
+            else:
+                txt = (
+                    f"🏢 Kompaniya: {company.name}\n"
+                    f"🔑 Qurilma: {device_id}\n"
+                    f"👤 Xodim: {full_name}\n"
+                    f"📌 Status: CHIQISH\n"
+                    f"📅 Sana: {time}\n"
+                )
 
-        try:
-            bot.send_photo(int(company.telegram_id), image,txt)
-        except Exception as e:
-            logger.error(f"Telegramga yuborishda xato: {e}")
-            return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            try:
+                bot.send_photo(int(company.telegram_id), image, txt)
+            except Exception as e:
+                logger.error(f"Telegramga yuborishda xato: {e}")
+                return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
