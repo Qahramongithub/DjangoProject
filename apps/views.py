@@ -56,8 +56,9 @@ class HikEventView(APIView):
         full_name = access_event.get("name", "Unknown")
         attendance_status = access_event.get("attendanceStatus", "UNKNOWN")
         date_time = event_data.get("dateTime", "")
-        date = datetime.datetime.strptime(date_time, "%Y-%m-%d")
-        time = datetime.datetime.strptime(date_time, "%H:%M:%S")
+        dt = datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%S")
+        date = dt.date()
+        time = dt.time()
         # image = event_data.get("image", "")
         # print(image)
         if full_name:
@@ -67,7 +68,8 @@ class HikEventView(APIView):
                     f"🔑 Qurilma: {device_id}\n"
                     f"👤 Xodim: {full_name}\n"
                     f"📌 Status: CHIQISH\n"
-                    f"📅 Sana: {time}\n"
+                    f"📅 Sana: {date}\n"
+                    f"   Vaqt: {time}\n"
                 )
             else:
                 txt = (
@@ -75,7 +77,8 @@ class HikEventView(APIView):
                     f"🔑 Qurilma: {device_id}\n"
                     f"👤 Xodim: {full_name}\n"
                     f"📌 Status: KIRISH\n"
-                    f"📅 Sana: {time}\n"
+                    f"📅 Sana: {date}\n"
+                    f"   Vaqt: {time}\n"
                 )
 
             try:
