@@ -1,7 +1,7 @@
 # views.py
+import datetime
 import json
 import logging
-import datetime
 
 import telebot
 from rest_framework import status
@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Hikvision
+from .filter import get_hikvision, get_employees
 
 logger = logging.getLogger(__name__)
 TOKEN = ""
@@ -41,16 +41,10 @@ class HikEventView(APIView):
         logger.info(f"Device ID: {device_id}")
 
         # Qurilma DBdan topiladi
-        hikvision_device = Hikvision.objects.filter(devise_id=device_id).first()
-        if not hikvision_device:
+        branch_id = get_hikvision(device_id)
+        if not branch_id:
             logger.warning(f"Unknown device ID: {device_id}")
             return Response({"error": "Unknown device"}, status=status.HTTP_403_FORBIDDEN)
-
-        # Qurilmaga tegishli company
-        company = hikvision_device.company
-        if not company.telegram_id:
-            logger.error(f"Company {company} uchun telegram_id mavjud emas")
-            return Response({"error": "No Telegram ID for company"}, status=status.HTTP_400_BAD_REQUEST)
 
         access_event = event_data.get("AccessControllerEvent", {})
         full_name = access_event.get("name", "Unknown")
@@ -59,12 +53,10 @@ class HikEventView(APIView):
         dt = datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%S")
         date = dt.date()
         time = dt.time()
-        # image = event_data.get("image", "")
-        # print(image)
         if full_name:
+            department = get_employees(full_name, branch_id=branch_id)
             if attendance_status == "checkOut":
                 txt = (
-                    f"🏢 Kompaniya: {company.name}\n"
                     f"🔑 Qurilma: {device_id}\n"
                     f"👤 Xodim: {full_name}\n"
                     f"📌 Status: CHIQISH\n"
@@ -73,16 +65,15 @@ class HikEventView(APIView):
                 )
             else:
                 txt = (
-                    f"🏢 Kompaniya: {company.name}\n"
                     f"🔑 Qurilma: {device_id}\n"
                     f"👤 Xodim: {full_name}\n"
                     f"📌 Status: KIRISH\n"
                     f"📅 Sana: {date}\n"
                     f"   Vaqt: {time}\n"
                 )
-
+            telegram_id = department
             try:
-                bot.send_photo(int(company.telegram_id), txt)
+                bot.send_photo(int(telegram_id), txt)
             except Exception as e:
                 logger.error(f"Telegramga yuborishda xato: {e}")
                 return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

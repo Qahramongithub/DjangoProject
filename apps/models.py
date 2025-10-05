@@ -18,3 +18,5 @@ class Hikvision(models.Model):
 
     def __str__(self):
         return self.company.name
+
+
