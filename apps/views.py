@@ -9,7 +9,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .filter import get_hikvision, get_employees
+from .filter import get_hikvision, get_employees, get_departments
 
 logger = logging.getLogger(__name__)
 TOKEN = ""
@@ -71,9 +71,12 @@ class HikEventView(APIView):
                     f"📅 Sana: {date}\n"
                     f"   Vaqt: {time}\n"
                 )
-            telegram_id = department
+            telegram_id = get_departments(department)
             try:
-                bot.send_photo(int(telegram_id), txt)
+                if telegram_id:
+                    bot.send_photo(int(telegram_id), txt)
+                else:
+                    print("telegram id not found")
             except Exception as e:
                 logger.error(f"Telegramga yuborishda xato: {e}")
                 return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
