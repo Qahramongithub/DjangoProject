@@ -1,9 +1,9 @@
 from django.urls import path
 
-from apps.views import HikvisionAccessControlAPIView
+from apps.views import HikEventView
 
 urlpatterns = [
-    path('telegram', HikvisionAccessControlAPIView.as_view()),
+    path('telegram', HikEventView.as_view()),
 ]
 
 

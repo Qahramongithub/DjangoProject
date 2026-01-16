@@ -52,7 +52,19 @@ def get_departments(department_id):
         return None
 
 
-branch_id = get_hikvision("TimePay10")
+def get_terminal(terminal_name):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+                       SELECT attendance_status
+                       from public.terminals_terminal
+                       WHERE terminal_name = %s""", (terminal_name,))
+        rows = cursor.fetchall()
+        if rows:
+            return rows[0][0]
+        return None
+
+branch_id = get_hikvision("timepay")
+print(get_terminal('timepay'))
 print(branch_id)
 if branch_id:
     department_id = get_employees(fullname, branch_id)

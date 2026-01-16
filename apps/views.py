@@ -8,8 +8,8 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from .filter import get_hikvision, get_employees, get_departments
+from rest_framework.permissions import AllowAny
+from .filter import get_hikvision, get_employees, get_departments, get_terminal
 
 logger = logging.getLogger(__name__)
 TOKEN = ""
@@ -18,6 +18,7 @@ bot = telebot.TeleBot(TOKEN)
 
 class HikEventView(APIView):
     parser_classes = (MultiPartParser, FormParser)
+    permission_classes = [AllowAny]
 
     def post(self, request, format=None):
         json_string = None
@@ -50,12 +51,19 @@ class HikEventView(APIView):
         full_name = access_event.get("name", "Unknown")
         attendance_status = access_event.get("attendanceStatus", "UNKNOWN")
         date_time = event_data.get("dateTime", "")
-        dt = datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%S")
+        image = event_data.get("image", "")
+        try:
+            dt = datetime.datetime.fromisoformat(date_time)
+        except ValueError:
+            dt = datetime.datetime.strptime(date_time, "%Y-%m-%dT%H:%M:%S%z")
+
         date = dt.date()
         time = dt.time()
         if full_name:
             department = get_employees(full_name, branch_id=branch_id)
-            if attendance_status == "checkOut":
+            telegram_id = get_departments(department)
+            status_device = get_terminal(device_id)
+            if attendance_status == "checkOut" or status_device == "onlyCheckOut":
                 txt = (
                     f"🔑 Qurilma: {device_id}\n"
                     f"👤 Xodim: {full_name}\n"
@@ -71,14 +79,17 @@ class HikEventView(APIView):
                     f"📅 Sana: {date}\n"
                     f"   Vaqt: {time}\n"
                 )
-            telegram_id = get_departments(department)
+            telegram_id = telegram_id
+            print(telegram_id)
             try:
-                if telegram_id:
-                    bot.send_photo(int(telegram_id), txt)
+                if telegram_id and image:
+                    bot.send_photo(int(telegram_id), photo=image, caption=txt)
+                elif telegram_id and not image:
+                    bot.send_message(int(telegram_id), text=txt)
                 else:
-                    print("telegram id not found")
+                    print("")
             except Exception as e:
                 logger.error(f"Telegramga yuborishda xato: {e}")
                 return Response({"error": "Telegram error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response({"status": "ok"}, status=status.HTTP_200_OK)
+            return Response({"status": "ok"}, status=status.HTTP_200_OK)
